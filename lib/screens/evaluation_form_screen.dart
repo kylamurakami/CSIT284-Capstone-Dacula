@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import 'package:capstone_dacula/models/activity.dart';
@@ -19,6 +20,7 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
   final _commentController = TextEditingController();
   int _rating = 0;
   bool _showRatingError = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -26,24 +28,47 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_rating == 0) {
       setState(() => _showRatingError = true);
       return;
     }
-    FeedbackRepository.instance.add(
-      FeedbackEntry(
-        activityId: widget.activity.id,
-        rating: _rating,
-        comment: _commentController.text.trim(),
-        submittedAt: DateTime.now(),
-      ),
-    );
-    final messenger = ScaffoldMessenger.of(context);
-    Navigator.of(context).pop();
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Thanks! Your feedback was submitted.')),
-    );
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await FeedbackRepository.instance.add(
+        FeedbackEntry(
+          activityId: widget.activity.id,
+          rating: _rating,
+          comment: _commentController.text.trim(),
+          submittedAt: DateTime.now(),
+        ),
+      );
+
+      if (!mounted) return;
+
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.of(context).pop();
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Thanks! Your feedback was submitted.'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to submit feedback. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -91,7 +116,16 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: _submit, child: const Text('Submit')),
+          FilledButton(
+            onPressed: _isSubmitting ? null : _submit,
+            child: _isSubmitting
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Submit'),
+          ),
         ],
       ),
     );

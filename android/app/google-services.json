@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "437594486344",
+    "project_id": "csit284-capstone-dacula",
+    "storage_bucket": "csit284-capstone-dacula.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:437594486344:android:28d2cdacc4e87bab994a7d",
+        "android_client_info": {
+          "package_name": "com.example.capstone_dacula"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTYSSb4UdjqCn6psS5YwveTYuAUQw86Do"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

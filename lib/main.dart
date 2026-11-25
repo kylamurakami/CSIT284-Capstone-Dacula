@@ -1,11 +1,29 @@
+
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:capstone_dacula/firebase_options.dart';
 import 'package:capstone_dacula/screens/activities_screen.dart';
 
 const Color kMaroon = Color(0xFF800000);
 const Color kGold = Color(0xFFFFC107);
 const Color kWhite = Color(0xFFFFFFFF);
 
-void main() => runApp(const CampusHubApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Sign in anonymously if there is no existing session.
+  if (FirebaseAuth.instance.currentUser == null) {
+    await FirebaseAuth.instance.signInAnonymously();
+  }
+
+  runApp(const CampusHubApp());
+}
 
 class CampusHubApp extends StatelessWidget {
   const CampusHubApp({super.key});
@@ -30,7 +48,8 @@ class CampusHubApp extends StatelessWidget {
           backgroundColor: kMaroon,
           foregroundColor: kWhite,
         ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        floatingActionButtonTheme:
+            const FloatingActionButtonThemeData(
           backgroundColor: kGold,
           foregroundColor: kMaroon,
         ),

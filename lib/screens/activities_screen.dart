@@ -1,35 +1,62 @@
+
 import 'package:flutter/material.dart';
 
 import 'package:capstone_dacula/data/dummy_data.dart';
 import 'package:capstone_dacula/models/activity.dart';
+import 'package:capstone_dacula/models/feedback_entry.dart';
 import 'package:capstone_dacula/screens/activity_detail_screen.dart';
 import 'package:capstone_dacula/services/feedback_repository.dart';
 import 'package:capstone_dacula/widgets/activity_image.dart';
 import 'package:capstone_dacula/widgets/star_rating.dart';
 
-/// Home screen: list of events with their current average rating.
 class ActivitiesScreen extends StatelessWidget {
   const ActivitiesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final repo = FeedbackRepository.instance;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Rate an Event')),
-      body: ListenableBuilder(
-        listenable: repo,
-        builder: (context, _) => ListView.builder(
-          padding: const EdgeInsets.all(12),
-          itemCount: dummyActivities.length,
-          itemBuilder: (context, i) {
-            final activity = dummyActivities[i];
-            return _ActivityCard(
-              activity: activity,
-              average: repo.averageFor(activity.id),
-              count: repo.countFor(activity.id),
-            );
-          },
-        ),
+      body: StreamBuilder<List<FeedbackEntry>>(
+        stream: repo.watchAll(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Unable to load feedback.'));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final entries = snapshot.data ?? [];
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: dummyActivities.length,
+            itemBuilder: (context, i) {
+              final activity = dummyActivities[i];
+              final activityEntries = entries
+                  .where((entry) => entry.activityId == activity.id)
+                  .toList();
+
+              final count = activityEntries.length;
+              final average = count == 0
+                  ? 0.0
+                  : activityEntries.fold<int>(
+                        0,
+                        (sum, entry) => sum + entry.rating,
+                      ) /
+                      count;
+
+              return _ActivityCard(
+                activity: activity,
+                average: average,
+                count: count,
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -49,6 +76,7 @@ class _ActivityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+
     return Card(
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.only(bottom: 12),
@@ -69,8 +97,10 @@ class _ActivityCard extends StatelessWidget {
                 children: [
                   Text(activity.title, style: text.titleMedium),
                   const SizedBox(height: 4),
-                  Text('${activity.venue} • ${activity.durationLabel}',
-                      style: text.bodySmall),
+                  Text(
+                    '${activity.venue} • ${activity.durationLabel}',
+                    style: text.bodySmall,
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
